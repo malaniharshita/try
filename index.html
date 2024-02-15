@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <h3>Movie Booking</h3>
+  <h4 id = "heading"></h4>
+  <div>
+    <label>Find Slot:</label>
+    <input type="text" id = "filter" name = "filter">
+  </div>
+  <form onsubmit="addForm(event)">
+    <label>User Name</label>
+    <input type = "text" name = "name" id = "name">
+    <label>Seat Number</label>
+    <input type = "text" name = "number" id = "number">
+    <button value = "Submit">Add</button>
+    <ul id = "listOfItems">
+    </ul>
+  </form>
+  <script src = "https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.7/axios.min.js">
+  </script>
+  <script>
+    function addForm(event){
+    event.preventDefault();
+    let name = event.target.name.value;
+    let number = event.target.number.value;
+    const obj={
+        name : name,
+        number : number
+    }
+    
+    let itemList = document.getElementById('listOfItems');
+    const items = itemList.getElementsByTagName('li');
+    let alreadyExist = false;
+    Array.from(items).forEach(function(item){
+        let number = item.firstChild.nextSibling.textContent;
+        if(number){
+          number = parseInt(number);
+            //console.log(number);
+        }
+        let originalnumber = event.target.number.value;
+        //console.log(originalnumber);
+        if(number == originalnumber){
+            alreadyExist = true;
+            //console.log('yes');
+            alert("already Booked "+number);
+        }
+      });
+
+        if(!alreadyExist){
+         axios.post('https://crudcrud.com/api/dfdeae8a5b95488e8ba492c8ffd0d716/bookingData',obj)
+        .then((res)=> {
+            show(res.data);
+            console.log(res);
+          })
+         .catch((error) => {
+           console.log(error)
+         });
+        }
+      }
+    
+    window.addEventListener("DOMContentLoaded", ()=>{
+      axios.get('https://crudcrud.com/api/dfdeae8a5b95488e8ba492c8ffd0d716/bookingData')
+      .then((res) => {
+         
+        for(let i = 0; i<res.data.length; i++){
+          show(res.data[i]);
+          //console.log(res.data[i]);
+        }
+      })
+      .catch((err) => {
+        console.log(err)
+      })
+    })
+
+    let count = 0;
+    let h = document.getElementById('heading');
+    h = counting();
+    function counting(){
+      axios.get('https://crudcrud.com/api/dfdeae8a5b95488e8ba492c8ffd0d716/bookingData')
+      .then((res) => {
+         count = res.data.length;
+         document.getElementById('heading').innerHTML = `TotalBooked :${count}`;
+      })
+    }
+    
+    
+    function show(obj){
+       //console.log(obj);
+       let items = document.getElementById('listOfItems');
+       let li = document.createElement('li');
+       counting();
+
+       li.id = obj._id;
+       li.appendChild(document.createTextNode(`${obj.name}`));
+       li.appendChild(document.createTextNode(` ${obj.number}`));
+
+       let delbutton = document.createElement('button');
+       delbutton.type = 'button'
+       delbutton.appendChild(document.createTextNode("Delete"));
+
+       let editbutton = document.createElement('button');
+       editbutton.type = 'button'
+       editbutton.appendChild(document.createTextNode("Edit"));
+
+       li.appendChild(delbutton);
+       li.appendChild(editbutton);
+
+       items.appendChild(li);
+
+       delbutton.onclick= () => {
+         deleteUser(obj._id);
+      }
+       editbutton.onclick = () => {
+          editUserDetail(obj.name,obj.number,obj._id);
+          console.log(`${obj._id}`);
+       }
+      
+    }
+
+    function deleteUser(userId){
+        console.log('in delete'+userId);
+        axios.delete("https://crudcrud.com/api/dfdeae8a5b95488e8ba492c8ffd0d716/bookingData/" + userId)
+        .then((response) => {
+           removeUserFromScreen(userId);
+           count--;
+           counting();
+        })
+        .catch((error) => {
+           console.log(error);
+        })
+      }
+
+    function removeUserFromScreen(userId){
+        //console.log(userId)
+        let parentEle = document.getElementById('listOfItems');
+        let childNodeToBeDeleted = document.getElementById(userId);
+        //console.log("this is"+childNodeToBeDeleted);
+        if(childNodeToBeDeleted){
+          parentEle.removeChild(childNodeToBeDeleted);
+        }
+    }
+    function editUserDetail(name,number,id){
+      console.log(name);
+      console.log(number);
+      console.log("Id",id);
+       document.getElementById('name').value = name;
+       document.getElementById('number').value = number;
+       deleteUser(id);
+    }
+    
+    let filter = document.getElementById('filter');
+    filter.addEventListener('keyup', filterItems);
+    let itemList = document.getElementById('listOfItems');
+
+    function filterItems(e){
+      const text  = e.target.value.toLowerCase();
+      
+      const items = itemList.getElementsByTagName('li');
+      
+      Array.from(items).forEach(function(item){
+          const name = item.firstChild.textContent;
+          const number = item.firstChild.nextSibling.textContent;
+          let flag = false;
+          
+          if(name.toLowerCase().indexOf(text) != -1 || number.toLowerCase().indexOf(text) != -1){
+            item.style.display = 'block';
+          } 
+          else {
+             item.style.display = 'none';
+
+          }
+      });
+      
+    }
+
+    
+
+  </script>
+  
+</body>
+</html>
